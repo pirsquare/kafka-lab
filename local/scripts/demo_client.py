@@ -3,7 +3,7 @@ import sys
 import time
 from typing import List
 
-from confluent_kafka import Producer, Consumer, KafkaError
+from confluent_kafka import Producer, Consumer, KafkaError, KafkaException
 from confluent_kafka.admin import AdminClient, NewTopic
 
 
@@ -12,19 +12,22 @@ DEFAULT_MESSAGES = ["one", "two", "three"]
 
 def ensure_topic(bootstrap: str, topic: str, partitions: int = 3, replication: int = 1) -> None:
     admin = AdminClient({"bootstrap.servers": bootstrap})
+    fs = admin.create_topics([NewTopic(topic, num_partitions=partitions, replication_factor=replication)])
+
+    # Only wait on the topic we asked for (avoids confusing prints)
+    f = fs.get(topic)
+    if f is None:
+        return
+
     try:
-        fs = admin.create_topics([NewTopic(topic, num_partitions=partitions, replication_factor=replication)])
-        for t, f in fs.items():
-            try:
-                f.result()
-                print(f"Created topic '{topic}'")
-            except Exception as e:
-                if "TopicAlreadyExists" in str(e):
-                    print(f"Topic '{topic}' already exists")
-                else:
-                    raise
-    finally:
-        admin.close()
+        f.result(timeout=15)
+        print(f"Created topic '{topic}'")
+    except KafkaException as e:
+        # Confluent typically uses the error code name in the message
+        if "TOPIC_ALREADY_EXISTS" in str(e) or "Topic '" in str(e) and "already exists" in str(e):
+            print(f"Topic '{topic}' already exists")
+        else:
+            raise
 
 
 def produce_messages(bootstrap: str, topic: str, messages: List[str]) -> None:
@@ -77,7 +80,7 @@ def consume_messages(bootstrap: str, topic: str, group_id: str, expected: int, t
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Simple Kafka produce/consume demo (KRaft, no ZooKeeper)")
-    parser.add_argument("--bootstrap", default="host.docker.internal:9094", help="Bootstrap server host:port")
+    parser.add_argument("--bootstrap", default="localhost:9094", help="Bootstrap server host:port")
     parser.add_argument("--topic", default="demo-topic", help="Topic name")
     parser.add_argument("--messages", nargs="*", default=DEFAULT_MESSAGES, help="Messages to send")
     parser.add_argument("--group-id", default="demo-group", help="Consumer group id")

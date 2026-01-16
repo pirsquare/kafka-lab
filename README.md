@@ -49,7 +49,8 @@ docker compose up -d
 ```
 4) Smoke test with Python Kafka client:
 ```bash
-python ./scripts/demo_client.py --bootstrap host.docker.internal:9094 --topic demo-topic --messages one two three
+python ./scripts/demo_client.py --bootstrap localhost:9094 --topic demo-topic --messages one two three
+
 ```
 5) Tear down:
 ```bash
