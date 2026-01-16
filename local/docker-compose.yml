@@ -1,42 +1,54 @@
-version: "3.8"
-
-name: kafka
-
 services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
-    env_file:
-      - .env
     ports:
-      - "${KAFKA_BROKER_PORT:-9092}:9092"
-      - "${KAFKA_CONTROLLER_PORT:-9093}:9093"
-      - "${KAFKA_EXTERNAL_PORT:-9094}:9094"
+      - "${KAFKA_BROKER_PORT:-9092}:9092"      # internal docker listener (optional to expose)
+      - "${KAFKA_CONTROLLER_PORT:-9093}:9093"  # controller listener (not needed for host)
+      - "${KAFKA_EXTERNAL_PORT:-9094}:9094"    # host listener (use this from Windows)
       - "${KAFKA_JMX_PORT:-9999}:${KAFKA_JMX_PORT:-9999}"
     environment:
-      - KAFKA_NODE_ID=${KAFKA_NODE_ID:-1}
-      - KAFKA_BROKER_ID=${KAFKA_NODE_ID:-1}
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://${HOST_IP:-host.docker.internal}:${KAFKA_EXTERNAL_PORT:-9094}
-      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-      - KAFKA_PROCESS_ROLES=broker,controller
-      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CONTROLLER_QUORUM_VOTERS=${KAFKA_CONTROLLER_QUORUM_VOTERS:-1@kafka:9093}
-      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094
-      - CLUSTER_ID=${KAFKA_KRAFT_CLUSTER_ID:-MkQkRWI5NzQtNDM1NC00ZWM1LTk5YzctNTQ0YzQxYzBkZjA3}
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_HEAP_OPTS=${KAFKA_HEAP_OPTS:--Xms512m -Xmx512m}
-      - KAFKA_JMX_PORT=${KAFKA_JMX_PORT:-9999}
+      # ---- KRaft basics ----
+      KAFKA_NODE_ID: "${KAFKA_NODE_ID:-1}"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "${KAFKA_CONTROLLER_QUORUM_VOTERS:-1@kafka:9093}"
+
+      # ---- Listeners ----
+      # PLAINTEXT: internal docker network
+      # EXTERNAL: for your Windows host
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+
+      # IMPORTANT: advertised addresses must be reachable by the client using them
+      # - Other containers reach kafka:9092
+      # - Your Windows host reaches localhost:9094
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,EXTERNAL://localhost:${KAFKA_EXTERNAL_PORT:-9094}"
+
+      # ---- KRaft cluster id (must be a valid base64 UUID) ----
+      CLUSTER_ID: "${KAFKA_KRAFT_CLUSTER_ID:-kJZ5nX4kQ7y0eJx2VYq4Zg}"
+      # (optional but fine)
+      KAFKA_KRAFT_CLUSTER_ID: "${KAFKA_KRAFT_CLUSTER_ID:-kJZ5nX4kQ7y0eJx2VYq4Zg}"
+
+      # ---- Single-node dev settings ----
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+      # ---- JVM/JMX ----
+      KAFKA_HEAP_OPTS: "${KAFKA_HEAP_OPTS:--Xms512m -Xmx512m}"
+      KAFKA_JMX_PORT: "${KAFKA_JMX_PORT:-9999}"
+
     volumes:
       - kafka_data:/var/lib/kafka/data
+
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
+      test: ["CMD", "bash", "-lc", "kafka-topics --bootstrap-server kafka:9092 --list >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 20s
 
 volumes:
