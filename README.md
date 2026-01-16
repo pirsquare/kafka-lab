@@ -13,7 +13,7 @@ Quickstart-friendly repo to run Apache Kafka without ZooKeeper in two modes:
 - Terraform modules with a common interface across AWS, GCP, and Azure.
 
 ---
-## Local (Docker Compose, Windows-friendly)
+## Local (Docker Compose)
 1) Install Docker Desktop and Python 3.9+.
 2) Install local Python deps:
 ```bash
@@ -105,4 +105,4 @@ terraform apply
 ---
 ## Next steps
 - Check [docs/architecture.md](docs/architecture.md) for diagram and flow.
-- See [docs/troubleshooting.md](docs/troubleshooting.md) for common pitfalls (advertised listeners, Windows networking, firewall, disk).
+- See [docs/troubleshooting.md](docs/troubleshooting.md) for common pitfalls (advertised listeners, networking, firewall, disk).
