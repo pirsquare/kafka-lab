@@ -57,6 +57,11 @@ python ./scripts/demo_client.py --bootstrap localhost:9094 --topic demo-topic --
 docker compose down -v
 ```
 
+### UI (Redpanda Console)
+- A lightweight Kafka UI is included. Access it at http://localhost:8080
+- It connects to the internal broker address `kafka:9092` via the compose network.
+- If you change listener ports, update `local/console/config.yaml` accordingly.
+
 ### Advertised listeners (local)
 - `EXTERNAL` listener binds to `0.0.0.0:9094` and advertises `host.docker.internal:9094` by default (works on Docker Desktop for Windows).
 - `PLAINTEXT` listener binds to `0.0.0.0:9092` for internal container traffic; inter-broker uses this too.
