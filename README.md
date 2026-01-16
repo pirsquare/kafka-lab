@@ -12,6 +12,25 @@ Quickstart-friendly repo to run Apache Kafka without ZooKeeper in two modes:
 - Optional JMX port exposure and basic logging.
 - Terraform modules with a common interface across AWS, GCP, and Azure.
 
+## Quick mental model of Kafka Cluster
+
+```txt
+ ┌──────────┐        ┌──────────────────────────────┐        ┌──────────┐
+ │ Producer │ ─────▶ │        Kafka Cluster          │ ─────▶ │ Consumer │
+ └──────────┘        │                              │        └──────────┘
+                     │  ┌──────────┐  ┌──────────┐ │
+                     │  │ Broker 1 │  │ Broker 2 │ │
+                     │  │          │  │          │ │
+                     │  │ Topic A  │  │ Topic A  │ │
+                     │  │  P0 (L)  │◀▶│  P0 (F)  │ │
+                     │  │  P1 (F)  │◀▶│  P1 (L)  │ │
+                     │  └──────────┘  └──────────┘ │
+                     │                              │
+                     │   Metadata / Controller      │
+                     │        (KRaft)               │
+                     └──────────────────────────────┘
+```
+
 ---
 ## Local (Docker Compose)
 1) Install Docker Desktop and Python 3.9+.
