@@ -30,7 +30,7 @@ Quickstart-friendly repo to run Apache Kafka without ZooKeeper in two modes:
                      │        (KRaft)               │
                      └──────────────────────────────┘
 ```
-- P0 is Parition 0
+- P0 is Partition 0
 - L is Leader
 - F is Follower
 
