@@ -1,2 +1,11 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalize line endings; prefer LF except for Windows-specific scripts
+* text=auto eol=lf
+*.ps1 text eol=lf
+*.sh text eol=lf
+*.tf text eol=lf
+*.tfvars text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.bat text eol=crlf
