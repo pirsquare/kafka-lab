@@ -44,6 +44,9 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     healthcheck:
       test: ["CMD", "bash", "-lc", "kafka-topics --bootstrap-server kafka:9092 --list >/dev/null 2>&1"]
       interval: 10s
@@ -55,12 +58,15 @@ services:
     image: redpandadata/console:latest
     container_name: console
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
     ports:
       - "8080:8080"
     volumes:
       - ./console/config.yaml:/etc/redpanda/console.yaml:ro
-    command: ["--config.file=/etc/redpanda/console.yaml"]
+    command:
+      - "-config.filepath=/etc/redpanda/console.yaml"
 
 volumes:
   kafka_data: {}

@@ -3,5 +3,5 @@ kafka:
     - kafka:9092
 
 server:
-  http:
-    addr: 0.0.0.0:8080
+  listenAddress: "0.0.0.0"
+  listenPort: 8080
