@@ -37,25 +37,23 @@ Quickstart-friendly repo to run Apache Kafka without ZooKeeper in two modes:
 
 ## Local (Docker Compose)
 1) Install Docker Desktop and Python 3.9+.
-2) Install local Python deps:
+2) Install local Python deps for the Kafka client demo:
 ```bash
 python -m pip install -r local/requirements.txt
 ```
-3) Copy env template and start:
+3) Copy env template and start Kafka:
 ```bash
 cd local
 cp .env.example .env
-python ./scripts/up.py
+docker compose up -d
 ```
-4) Smoke test (Python client):
+4) Smoke test with Python Kafka client:
 ```bash
 python ./scripts/demo_client.py --bootstrap host.docker.internal:9094 --topic demo-topic --messages one two three
-# or the short wrapper
-python ./scripts/smoke_test.py
 ```
 5) Tear down:
 ```bash
-python ./scripts/down.py
+docker compose down -v
 ```
 
 ### Advertised listeners (local)
