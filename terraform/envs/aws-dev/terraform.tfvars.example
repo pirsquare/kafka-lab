@@ -1,0 +1,11 @@
+region = "ap-southeast-1"
+broker_count = 3
+vpc_cidr = "10.20.0.0/16"
+public_subnet_cidr = "10.20.10.0/24"
+allowed_cidr = "0.0.0.0/0"
+instance_type = "t3.small"
+root_volume_size = 50
+key_name = "kafka-demo-key"
+public_key_path = "~/.ssh/id_rsa.pub"
+advertise_public = false
+cluster_name = "aws-kraft-dev"

@@ -1,0 +1,12 @@
+resource_group_name = "kafka-kraft-rg"
+location = "southeastasia"
+broker_count = 3
+vnet_cidr = "10.40.0.0/16"
+subnet_cidr = "10.40.10.0/24"
+allowed_cidr = "0.0.0.0/0"
+vm_size = "Standard_B2s"
+os_disk_gb = 64
+admin_username = "azureuser"
+public_key_path = "~/.ssh/id_rsa.pub"
+advertise_public = false
+cluster_name = "azure-kraft-dev"

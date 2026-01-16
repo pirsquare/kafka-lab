@@ -1,0 +1,12 @@
+project = "your-gcp-project"
+region = "asia-southeast1"
+zone = "asia-southeast1-a"
+broker_count = 3
+subnet_cidr = "10.30.10.0/24"
+allowed_cidr = "0.0.0.0/0"
+machine_type = "e2-medium"
+boot_disk_gb = 50
+ssh_user = "ubuntu"
+public_key_path = "~/.ssh/id_rsa.pub"
+advertise_public = false
+cluster_name = "gcp-kraft-dev"
