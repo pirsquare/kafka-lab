@@ -3,51 +3,71 @@ import sys
 import time
 from typing import List
 
-from kafka import KafkaConsumer, KafkaProducer
-from kafka.admin import KafkaAdminClient, NewTopic
-from kafka.errors import TopicAlreadyExistsError
+from confluent_kafka import Producer, Consumer, KafkaError
+from confluent_kafka.admin import AdminClient, NewTopic
 
 
 DEFAULT_MESSAGES = ["one", "two", "three"]
 
 
 def ensure_topic(bootstrap: str, topic: str, partitions: int = 3, replication: int = 1) -> None:
-    admin = KafkaAdminClient(bootstrap_servers=bootstrap, client_id="demo-admin")
+    admin = AdminClient({"bootstrap.servers": bootstrap})
     try:
-        admin.create_topics([NewTopic(name=topic, num_partitions=partitions, replication_factor=replication)])
-        print(f"Created topic '{topic}'")
-    except TopicAlreadyExistsError:
-        print(f"Topic '{topic}' already exists")
+        fs = admin.create_topics([NewTopic(topic, num_partitions=partitions, replication_factor=replication)])
+        for t, f in fs.items():
+            try:
+                f.result()
+                print(f"Created topic '{topic}'")
+            except Exception as e:
+                if "TopicAlreadyExists" in str(e):
+                    print(f"Topic '{topic}' already exists")
+                else:
+                    raise
     finally:
         admin.close()
 
 
 def produce_messages(bootstrap: str, topic: str, messages: List[str]) -> None:
-    producer = KafkaProducer(bootstrap_servers=bootstrap, acks="all")
+    def on_delivery(err, msg):
+        if err:
+            print(f"Message delivery failed: {err}")
+        else:
+            print(f"Produced: {msg.value().decode('utf-8')}")
+
+    producer = Producer({"bootstrap.servers": bootstrap, "acks": "all"})
     for msg in messages:
-        producer.send(topic, msg.encode("utf-8"))
-        print(f"Produced: {msg}")
+        producer.produce(topic, msg.encode("utf-8"), callback=on_delivery)
     producer.flush()
-    producer.close()
 
 
 def consume_messages(bootstrap: str, topic: str, group_id: str, expected: int, timeout: float = 10.0) -> None:
-    consumer = KafkaConsumer(
-        topic,
-        bootstrap_servers=bootstrap,
-        group_id=group_id,
-        auto_offset_reset="earliest",
-        enable_auto_commit=True,
+    consumer = Consumer(
+        {
+            "bootstrap.servers": bootstrap,
+            "group.id": group_id,
+            "auto.offset.reset": "earliest",
+            "enable.auto.commit": True,
+        }
     )
+    consumer.subscribe([topic])
     deadline = time.time() + timeout
     received = 0
-    for message in consumer:
-        print(f"Consumed: {message.value.decode('utf-8')}")
+
+    while received < expected:
+        msg = consumer.poll(timeout=1.0)
+        if msg is None:
+            if time.time() > deadline:
+                break
+            continue
+        if msg.error():
+            if msg.error().code() == KafkaError._PARTITION_EOF:
+                continue
+            else:
+                print(f"Consumer error: {msg.error()}")
+                break
+        print(f"Consumed: {msg.value().decode('utf-8')}")
         received += 1
-        if received >= expected:
-            break
-        if time.time() > deadline:
-            break
+
     consumer.close()
     if received < expected:
         print(f"Warning: expected {expected} messages, got {received}")
