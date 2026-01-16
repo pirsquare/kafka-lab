@@ -31,7 +31,6 @@ Quickstart-friendly repo to run Apache Kafka without ZooKeeper in two modes:
                      └──────────────────────────────┘
 ```
 
----
 ## Local (Docker Compose)
 1) Install Docker Desktop and Python 3.9+.
 2) Install local Python deps:
